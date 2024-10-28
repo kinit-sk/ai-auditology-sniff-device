@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Touch Event Recorder</title>
+    <style>
+        body {
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        #copyButton, #clearButton {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            margin-right: 10px;
+        }
+        #clearButton {
+            left: 100px;
+        }
+        .touch-circle {
+            position: absolute;
+            border: 2px solid red;
+            border-radius: 50%;
+            pointer-events: none; /* So circles don't interfere with touch events */
+        }
+    </style>
+</head>
+<body>
+    <button id="copyButton">Copy</button>
+    <button id="clearButton">Clear</button>
+
+    <script>
+        var touchEvents = [];
+
+        function recordTouchEvent(event) {
+            // Ignore touch events on buttons
+            if (event.target.tagName.toLowerCase() === 'button') {
+                return;
+            }
+
+            event.preventDefault(); // Prevent default behavior
+
+            var touches = event.changedTouches;
+            for (var i = 0; i < touches.length; i++) {
+                var touch = touches[i];
+
+                // Record the touch event
+                var touchEvent = {
+                    type: event.type,
+                    identifier: touch.identifier,
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    force: touch.force || 0.5, // Default force if not available
+                    timestamp: event.timeStamp
+                };
+
+                touchEvents.push(touchEvent);
+
+                // Visualize the touch event
+                visualizeTouch(touch);
+            }
+        }
+
+        function visualizeTouch(touch) {
+            var circle = document.createElement('div');
+            circle.className = 'touch-circle';
+
+            var force = touch.force || 0.5; // Default force if not available
+
+            // Determine circle size based on force
+            var size = force * 50; // Adjust multiplier as needed
+
+            circle.style.width = size + 'px';
+            circle.style.height = size + 'px';
+
+            circle.style.left = (touch.clientX - size / 2) + 'px';
+            circle.style.top = (touch.clientY - size / 2) + 'px';
+
+            document.body.appendChild(circle);
+
+            // Remove the circle after 2 seconds
+            setTimeout(function() {
+                circle.remove();
+            }, 2000);
+        }
+
+        // Add touch event listeners
+        document.addEventListener('touchstart', recordTouchEvent, { passive: false });
+        document.addEventListener('touchmove', recordTouchEvent, { passive: false });
+        document.addEventListener('touchend', recordTouchEvent, { passive: false });
+
+        // Copy button functionality
+        document.getElementById('copyButton').addEventListener('click', function() {
+            var touchEventsText = JSON.stringify(touchEvents, null, 2);
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(touchEventsText).then(function() {
+                alert('Touch events copied to clipboard');
+            }, function(err) {
+                alert('Could not copy touch events: ' + err);
+            });
+        });
+
+        // Clear button functionality
+        document.getElementById('clearButton').addEventListener('click', function() {
+            document.getElementById('copyButton').remove();
+            document.getElementById('clearButton').remove();
+        });
+    </script>
+</body>
+</html>

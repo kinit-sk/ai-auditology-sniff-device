@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            font-size: 0.875rem;
+            /* Smallest readable size */
+            margin: 0;
+        }
+
+        #user-info {
+            margin: 1rem;
+        }
+
+        .app-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #111111;
+            padding: 0 1rem;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 0.2rem;
+        }
+
+        button {
+            background-color: #dadada;
+            border: none;
+            color: #111111;
+            padding: 0.2rem;
+            margin: 0;
+            border-radius: 0.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #cacaca;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            color: #fafafa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-bar">
+        <h1>Device Information</h1>
+        <div class="buttons">
+            <button onclick="refreshUserInfo()" aria-label="Refresh Information">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <path fill="#111111" stroke-width="2"
+                        d="M12 4V1L8 5l4 4V6c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.14-7-7H2c0 5.52 4.48 10 10 10s10-4.48 10-10S17.52 4 12 4z" />
+                </svg>
+            </button>
+            <button onclick="copyToClipboard()" aria-label="Copy to Clipboard">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 5c-.988 0-1.506.013-1.908.218a2 2 0 0 0-.874.874C5 6.52 5 7.08 5 8.2v9.6c0 1.12 0 1.68.218 2.108a2 2 0 0 0 .874.874C6.52 21 7.08 21 8.2 21h7.6c1.12 0 1.68 0 2.108-.218a2 2 0 0 0 .874-.874C19 19.48 19 18.92 19 17.8V8.2c0-1.12 0-1.68-.218-2.108a2 2 0 0 0-.874-.874c-.402-.205-.92-.217-1.908-.218M8 5v2h8V5M8 5v-.293A1.707 1.707 0 0 1 9.707 3h4.586A1.707 1.707 0 0 1 16 4.707V5" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div id="user-info"></div>
+
+    <script>
+        async function displayUserInfo() {
+            const userInfoDiv = document.getElementById('user-info');
+            userInfoDiv.innerHTML = '';
+
+            // Screen Information
+            userInfoDiv.innerHTML += `<div class="info"><strong>Screen Width:</strong> ${window.screen.width} px</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Screen Height:</strong> ${window.screen.height} px</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Viewport Width:</strong> ${window.innerWidth} px</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Viewport Height:</strong> ${window.innerHeight} px</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Device Pixel Ratio:</strong> ${window.devicePixelRatio}</div>`;
+
+            // Screen Orientation
+            if (screen.orientation) {
+                userInfoDiv.innerHTML += `<div class="info"><strong>Screen Orientation Type:</strong> ${screen.orientation.type}</div>`;
+                userInfoDiv.innerHTML += `<div class="info"><strong>Screen Orientation Angle:</strong> ${screen.orientation.angle} degrees</div>`;
+            }
+            // Platform and Architecture
+            userInfoDiv.innerHTML += `<div class="info"><strong>Platform:</strong> ${navigator.platform}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Architecture (User Agent):</strong> ${navigator.userAgent}</div>`;
+
+            // User Agent Data
+            if (navigator.userAgentData) {
+                let brands = navigator.userAgentData.brands.map(brand => `${brand.brand}: ${brand.version}`).join(', ');
+                let mobile = navigator.userAgentData.mobile;
+                userInfoDiv.innerHTML += `<div class="info"><strong>Brands:</strong> ${brands}</div>`;
+                userInfoDiv.innerHTML += `<div class="info"><strong>Mobile:</strong> ${mobile}</div>`;
+
+                // Attempt to retrieve additional client hints
+                try {
+                    const uaData = await navigator.userAgentData.getHighEntropyValues([
+                        'architecture', 'bitness', 'model', 'platform', 'platformVersion', 'wow64'
+                    ]);
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Architecture:</strong> ${uaData.architecture || 'Not available'}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Bitness:</strong> ${uaData.bitness || 'Not available'}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Model:</strong> ${uaData.model || 'Not available'}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Platform:</strong> ${uaData.platform || 'Not available'}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Platform Version:</strong> ${uaData.platformVersion || 'Not available'}</div>`;
+
+                    let wow64 = uaData.wow64;
+                    if (wow64 === undefined && uaData.architecture === 'x86' && uaData.bitness === '64') {
+                        wow64 = true;
+                    }
+                    userInfoDiv.innerHTML += `<div class="info"><strong>WOW64:</strong> ${wow64 !== undefined ? wow64 : 'Not available'}</div>`;
+                } catch (error) {
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Client Hints:</strong> Unable to retrieve additional client hints (${error.message})</div>`;
+                }
+            } else {
+                userInfoDiv.innerHTML += `<div class="info"><strong>User Agent:</strong> ${navigator.userAgent}</div>`;
+            }
+            // Additional Information
+            userInfoDiv.innerHTML += `<div class="info"><strong>Cookies Enabled:</strong> ${navigator.cookieEnabled}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Language:</strong> ${navigator.language}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Online Status:</strong> ${navigator.onLine}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Hardware Concurrency:</strong> ${navigator.hardwareConcurrency}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>Max Touch Points:</strong> ${navigator.maxTouchPoints}</div>`;
+
+            // App Information
+            userInfoDiv.innerHTML += `<div class="info"><strong>App Name:</strong> ${navigator.appName}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>App Version:</strong> ${navigator.appVersion}</div>`;
+            userInfoDiv.innerHTML += `<div class="info"><strong>App Code Name:</strong> ${navigator.appCodeName}</div>`;
+            // Geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Latitude:</strong> ${latitude}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Longitude:</strong> ${longitude}</div>`;
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Accuracy:</strong> ${accuracy} meters</div>`;
+                    const mapUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&hl=es;z=14&output=embed`;
+                    console.log(mapUrl);
+                    userInfoDiv.innerHTML += `<iframe width="100%" height="300" frameborder="0" style="border:0" src="${mapUrl}" allowfullscreen></iframe>`;
+                }, (error) => {
+                    userInfoDiv.innerHTML += `<div class="info"><strong>Geolocation:</strong> Unable to retrieve location (${error.message})</div>`;
+                });
+            } else {
+                userInfoDiv.innerHTML += `<div class="info"><strong>Geolocation:</strong> Not supported by this browser.</div>`;
+            }
+        }
+
+        function refreshUserInfo() {
+            displayUserInfo();
+        }
+
+        function copyToClipboard() {
+            const userInfoDiv = document.getElementById('user-info');
+            const textToCopy = userInfoDiv.innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('Information copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        displayUserInfo();
+    </script>
+</body>
+
+</html>
