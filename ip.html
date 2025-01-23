@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.4;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    #user-info {
+      margin: 1rem;
+    }
+
+    .app-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #111111;
+      padding: 0 1rem;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 0.2rem;
+    }
+
+    button {
+      background-color: #dadada;
+      border: none;
+      color: #111111;
+      padding: 0.2rem;
+      margin: 0;
+      border-radius: 0.2rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #cacaca;
+    }
+
+    button:focus {
+      outline: none;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      color: #fafafa;
+    }
+
+    .info-label {
+      font-weight: bold;
+      color: #111111
+    }
+
+    .error {
+      margin: 1rem;
+      color: red;
+    }
+
+    #api-token-input {
+      margin-left: 1rem;
+      margin-right: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 0.2rem;
+      padding: 0.2rem;
+    }
+  </style>
+  <title>IP Information</title>
+</head>
+
+<body>
+  <div class="app-bar">
+    <h1>IP Information</h1>
+    <div class="buttons">
+      <input type="text" id="api-token-input" placeholder="Enter API Token" aria-label="API Token">
+      <button id="fetch-button" aria-label="Fetch Information">
+        <svg viewBox="0 0 20.234 20.234" fill="#000000">
+          <path style="fill:#030104;"
+            d="M6.776,4.72h1.549v6.827H6.776V4.72z M11.751,4.669c-0.942,0-1.61,0.061-2.087,0.143v6.735h1.53 V9.106c0.143,0.02,0.324,0.031,0.527,0.031c0.911,0,1.691-0.224,2.218-0.721c0.405-0.386,0.628-0.952,0.628-1.621 c0-0.668-0.295-1.234-0.729-1.579C13.382,4.851,12.702,4.669,11.751,4.669z M11.709,7.95c-0.222,0-0.385-0.01-0.516-0.041V5.895 c0.111-0.03,0.324-0.061,0.639-0.061c0.769,0,1.205,0.375,1.205,1.002C13.037,7.535,12.53,7.95,11.709,7.95z M10.117,0 C5.523,0,1.8,3.723,1.8,8.316s8.317,11.918,8.317,11.918s8.317-7.324,8.317-11.917S14.711,0,10.117,0z M10.138,13.373 c-3.05,0-5.522-2.473-5.522-5.524c0-3.05,2.473-5.522,5.522-5.522c3.051,0,5.522,2.473,5.522,5.522 C15.66,10.899,13.188,13.373,10.138,13.373z">
+          </path>
+        </svg>
+      </button>
+      <button onclick="refreshUserInfo()" aria-label="Refresh Information">
+        <svg fill="none" viewBox="0 0 24 24">
+          <path fill="#111111" stroke-width="2"
+            d="M12 4V1L8 5l4 4V6c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.14-7-7H2c0 5.52 4.48 10 10 10s10-4.48 10-10S17.52 4 12 4z" />
+        </svg>
+      </button>
+      <button onclick="copyToClipboard()" aria-label="Copy to Clipboard">
+        <svg fill="none" viewBox="0 0 24 24">
+          <path stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 5c-.988 0-1.506.013-1.908.218a2 2 0 0 0-.874.874C5 6.52 5 7.08 5 8.2v9.6c0 1.12 0 1.68.218 2.108a2 2 0 0 0 .874.874C6.52 21 7.08 21 8.2 21h7.6c1.12 0 1.68 0 2.108-.218a2 2 0 0 0 .874-.874C19 19.48 19 18.92 19 17.8V8.2c0-1.12 0-1.68-.218-2.108a2 2 0 0 0-.874-.874c-.402-.205-.92-.217-1.908-.218M8 5v2h8V5M8 5v-.293A1.707 1.707 0 0 1 9.707 3h4.586A1.707 1.707 0 0 1 16 4.707V5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div id="user-info">
+    <div class="info-item">Get your <span class="info-label">API Token</span> at <a href="https://ipinfo.io/">https://ipinfo.io/</a></div>
+  </div>
+  <div id="error-message" class="error"></div>
+
+  <script>
+    const fetchButton = document.getElementById("fetch-button");
+    const apiTokenInput = document.getElementById("api-token-input");
+    const userInfoDiv = document.getElementById("user-info");
+    const errorMessageDiv = document.getElementById("error-message");
+
+    let ipInfoData = null; // Store the fetched data globally
+
+    function displayData(data, parentKey = "") {
+      for (const key in data) {
+        const value = data[key];
+        const label = parentKey ? `${parentKey}.${key}` : key;
+
+        if (typeof value === "object" && value !== null) {
+          displayData(value, label);
+        } else {
+          const div = document.createElement("div");
+          div.classList.add("info-item");
+          div.innerHTML = `<span class="info-label">${label}:</span> ${value}`;
+          userInfoDiv.appendChild(div);
+        }
+      }
+    }
+
+    function refreshUserInfo() {
+      if (ipInfoData) {
+        userInfoDiv.innerHTML = "";
+        displayData(ipInfoData);
+      } else {
+        fetchUserInfo();
+      }
+    }
+
+    function copyToClipboard() {
+      if (ipInfoData) {
+        const textToCopy = JSON.stringify(ipInfoData, null, 2); 
+
+        navigator.clipboard.writeText(textToCopy)
+          .then(() => {
+            console.log("IP information copied to clipboard!");
+          })
+          .catch(err => {
+            console.error("Failed to copy:", err);
+          });
+      }
+    }
+
+    function fetchUserInfo() {
+      const apiToken = apiTokenInput.value.trim();
+      userInfoDiv.innerHTML = "";
+      errorMessageDiv.innerHTML = "";
+
+      if (!apiToken) {
+        errorMessageDiv.innerHTML = "Please enter an API Token.";
+        return;
+      }
+
+      fetch(`https://ipinfo.io?token=${apiToken}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          ipInfoData = data;
+          displayData(ipInfoData);
+          localStorage.setItem("apiToken", apiToken);
+        })
+        .catch(error => {
+          console.error("Error fetching IP information:", error);
+          errorMessageDiv.innerHTML = "Error fetching IP information. Please check your API token and network connection.";
+        });
+    }
+
+    fetchButton.addEventListener("click", fetchUserInfo);
+
+    const storedApiToken = localStorage.getItem("apiToken");
+    if (storedApiToken) {
+      apiTokenInput.value = storedApiToken;
+      fetchUserInfo();
+    }
+  </script>
+</body>
+
+</html>
